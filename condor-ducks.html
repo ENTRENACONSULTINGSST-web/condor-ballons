@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONDOR DUCKS</title>
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #87CEEB;
+  touch-action: none;
+  font-family: Arial;
+}
+canvas { display: block; }
+
+#ui {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 10;
+  color: white;
+  text-shadow: 4px 4px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000;
+  font-size: 32px;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 100;
+  color: white;
+}
+.overlay h1 {
+  font-size: 64px;
+  margin: 0 0 10px;
+  text-shadow: 4px 4px 0 #000;
+  letter-spacing: 4px;
+}
+.overlay p {
+  font-size: 22px;
+  margin: 0 0 30px;
+  opacity: .8;
+}
+.overlay button {
+  padding: 18px 40px;
+  border: none;
+  border-radius: 12px;
+  font-size: 22px;
+  cursor: pointer;
+  background: #ffd24d;
+  color: #222;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+.overlay button:hover { background: #ffe07a; }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  PUNTOS: <span id="score">0</span><br>
+  TIEMPO: <span id="time">60</span>
+</div>
+
+<!-- Pantalla de inicio -->
+<div id="startScreen" class="overlay" style="display:flex">
+  <h1>CONDOR DUCKS</h1>
+  <p>Revienta globos · Evita los cóndores</p>
+  <button onclick="startGame()">JUGAR</button>
+</div>
+
+<!-- Game Over -->
+<div id="gameOver" class="overlay">
+  <h1>GAME OVER</h1>
+  <p id="finalScore">PUNTAJE: 0</p>
+  <button onclick="location.reload()">REINICIAR</button>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx    = canvas.getContext("2d");
+
+canvas.width  = innerWidth;
+canvas.height = innerHeight;
+
+const uiScore = document.getElementById("score");
+const uiTime  = document.getElementById("time");
+
+let score      = 0;
+let gameRunning = false;
+let timeLeft   = 60;
+let rafId      = null;
+let balloonIntervalId = null;
+let condorIntervalId  = null;
+let timerIntervalId   = null;
+
+// ─── Gradiente de fondo (creado una sola vez) ─────────────────────────────
+let bgGradient = null;
+function buildGradient() {
+  bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bgGradient.addColorStop(0, "#87CEEB");
+  bgGradient.addColorStop(1, "#dff6ff");
+}
+buildGradient();
+
+// ─── Canvas offscreen para nubes estáticas ────────────────────────────────
+let cloudCanvas = null;
+function buildClouds() {
+  cloudCanvas = document.createElement("canvas");
+  cloudCanvas.width  = canvas.width;
+  cloudCanvas.height = canvas.height;
+  const cc = cloudCanvas.getContext("2d");
+  cc.fillStyle = "rgba(255,255,255,.5)";
+  for (let i = 0; i < 6; i++) {
+    cc.beginPath();
+    cc.arc(i * 350 + 100, 100, 40, 0, Math.PI * 2);
+    cc.arc(i * 350 + 140, 100, 50, 0, Math.PI * 2);
+    cc.arc(i * 350 + 180, 100, 40, 0, Math.PI * 2);
+    cc.fill();
+  }
+}
+buildClouds();
+
+// ─── GLOBOS ───────────────────────────────────────────────────────────────
+const balloons = [];
+const colors = ["#ff4d4d","#ffd24d","#4dd2ff","#66ff66","#ff66ff","#ff884d"];
+
+function createBalloon() {
+  balloons.push({
+    x:           Math.random() * canvas.width,
+    y:           canvas.height + 100,
+    radius:      30 + Math.random() * 20,
+    color:       colors[Math.floor(Math.random() * colors.length)],
+    speed:       1 + Math.random() * 2,
+    sway:        Math.random() * 2,
+    explode:     false,
+    explodeSize: 0
+  });
+}
+
+// ─── CÓNDORES ─────────────────────────────────────────────────────────────
+const condors = [];
+
+function createCondor() {
+  condors.push({
+    x:         canvas.width + 200,
+    y:         Math.random() * (canvas.height - 300) + 100,
+    width:     140,
+    height:    100,
+    speed:     2 + Math.random() * 1.5,
+    wing:      0,
+    dead:      false,
+    fallSpeed: 0
+  });
+}
+
+// ─── DISPAROS ─────────────────────────────────────────────────────────────
+const shots = [];
+
+canvas.addEventListener("touchstart", handleInput, { passive: false });
+canvas.addEventListener("mousedown",  handleInput);
+
+function handleInput(e) {
+  if (!gameRunning) return;
+  e.preventDefault();
+
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+  shots.push({ x, y, radius: 10, life: 20 });
+
+  let hitBalloon  = false;
+  let hitCondor   = false;
+
+  // ── Impacto globos
+  for (let i = balloons.length - 1; i >= 0; i--) {
+    const b  = balloons[i];
+    const dx = x - b.x;
+    const dy = y - b.y;
+    if (Math.sqrt(dx * dx + dy * dy) < b.radius && !b.explode) {
+      b.explode   = true;
+      score      += 10;
+      uiScore.innerText = score;
+      hitBalloon  = true;
+      break; // un solo globo por disparo
+    }
+  }
+
+  // ── Impacto cóndor
+  // Ajuste de hitbox: el cóndor se dibuja desde c.x-30 por el ala izquierda
+  for (let i = condors.length - 1; i >= 0; i--) {
+    const c = condors[i];
+    if (!c.dead &&
+        x > c.x - 30 &&
+        x < c.x + c.width - 30 &&
+        y > c.y &&
+        y < c.y + c.height) {
+      c.dead    = true;
+      hitCondor = true;
+      setTimeout(gameOver, 800);
+      break;
+    }
+  }
+
+  // Vibración: una sola llamada con la intensidad correcta
+  if (navigator.vibrate) {
+    if (hitCondor)      navigator.vibrate([200, 100, 200]);
+    else if (hitBalloon) navigator.vibrate([50, 30, 50]);
+    else                 navigator.vibrate(20);
+  }
+}
+
+// ─── FONDO ────────────────────────────────────────────────────────────────
+function drawBackground() {
+  ctx.fillStyle = bgGradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(cloudCanvas, 0, 0);
+}
+
+// ─── DIBUJA GLOBOS ────────────────────────────────────────────────────────
+function drawBalloons() {
+  // Iterar en reversa para poder hacer splice sin desfase de índices
+  for (let i = balloons.length - 1; i >= 0; i--) {
+    const b = balloons[i];
+
+    b.y -= b.speed;
+    b.x += Math.sin(Date.now() * 0.001 * b.sway);
+    b.speed += 0.001;
+
+    if (b.explode) {
+      b.explodeSize += 4;
+      ctx.beginPath();
+      ctx.fillStyle = "orange";
+      ctx.arc(b.x, b.y, b.explodeSize, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.fillStyle = "yellow";
+      ctx.arc(b.x, b.y, b.explodeSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (b.explodeSize > 40) { balloons.splice(i, 1); continue; }
+    } else {
+      // Cuerda
+      ctx.strokeStyle = "#555";
+      ctx.lineWidth   = 2;
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y + b.radius);
+      ctx.lineTo(b.x + Math.sin(Date.now() * 0.003) * 10, b.y + b.radius + 40);
+      ctx.stroke();
+
+      // Globo
+      ctx.beginPath();
+      ctx.fillStyle = b.color;
+      ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Brillo
+      ctx.beginPath();
+      ctx.fillStyle = "rgba(255,255,255,.5)";
+      ctx.arc(b.x - b.radius / 3, b.y - b.radius / 3, b.radius / 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (b.y < -100) { balloons.splice(i, 1); }
+  }
+}
+
+// ─── DIBUJA CÓNDORES ──────────────────────────────────────────────────────
+function drawCondors() {
+  for (let i = condors.length - 1; i >= 0; i--) {
+    const c = condors[i];
+
+    if (!c.dead) {
+      c.x    -= c.speed;
+      c.wing += 0.2;
+    } else {
+      c.fallSpeed += 0.4;
+      c.y += c.fallSpeed;
+      c.x -= 1;
+    }
+
+    ctx.save();
+    ctx.translate(c.x, c.y);
+
+    // Ala izquierda
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.ellipse(-30, Math.sin(c.wing) * 20, 70, 25, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ala derecha
+    ctx.beginPath();
+    ctx.ellipse(50, -Math.sin(c.wing) * 20, 70, 25, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cuerpo
+    ctx.fillStyle = "#222";
+    ctx.beginPath();
+    ctx.ellipse(10, 20, 55, 35, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cuello
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(50, 0, 25, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cabeza
+    ctx.fillStyle = "#b85f50";
+    ctx.beginPath();
+    ctx.arc(75, -10, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pico
+    ctx.fillStyle = "#e0b35c";
+    ctx.beginPath();
+    ctx.moveTo(88, -10);
+    ctx.lineTo(110, -4);
+    ctx.lineTo(88, 2);
+    ctx.fill();
+
+    // Ojo
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(78, -12, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.arc(79, -12, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    if (c.x < -300 || c.y > canvas.height + 300) {
+      condors.splice(i, 1);
+    }
+  }
+}
+
+// ─── DIBUJA DISPAROS ──────────────────────────────────────────────────────
+function drawShots() {
+  for (let i = shots.length - 1; i >= 0; i--) {
+    const s = shots[i];
+    s.life--;
+    s.radius += 2;
+
+    ctx.beginPath();
+    ctx.strokeStyle = "white";
+    ctx.lineWidth   = 4;
+    ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (s.life <= 0) { shots.splice(i, 1); }
+  }
+}
+
+// ─── GAME LOOP ────────────────────────────────────────────────────────────
+function update() {
+  if (!gameRunning) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawBalloons();
+  drawCondors();
+  drawShots();
+
+  rafId = requestAnimationFrame(update);
+}
+
+// ─── INICIAR ──────────────────────────────────────────────────────────────
+function startGame() {
+  document.getElementById("startScreen").style.display = "none";
+  gameRunning = true;
+
+  balloonIntervalId = setInterval(() => { if (gameRunning) createBalloon(); }, 600);
+  condorIntervalId  = setInterval(() => { if (gameRunning) createCondor();  }, 2500);
+
+  timerIntervalId = setInterval(() => {
+    if (!gameRunning) return;
+    timeLeft--;
+    uiTime.innerText = timeLeft;
+    if (timeLeft <= 0) { clearInterval(timerIntervalId); gameOver(); }
+  }, 1000);
+
+  rafId = requestAnimationFrame(update);
+}
+
+// ─── GAME OVER ────────────────────────────────────────────────────────────
+function gameOver() {
+  if (!gameRunning) return; // evita doble llamada
+  gameRunning = false;
+
+  cancelAnimationFrame(rafId);
+  clearInterval(balloonIntervalId);
+  clearInterval(condorIntervalId);
+  clearInterval(timerIntervalId);
+
+  document.getElementById("finalScore").textContent = "PUNTAJE: " + score;
+  document.getElementById("gameOver").style.display = "flex";
+}
+
+// ─── RESPONSIVE ───────────────────────────────────────────────────────────
+window.addEventListener("resize", () => {
+  canvas.width  = innerWidth;
+  canvas.height = innerHeight;
+  buildGradient(); // reconstruir gradiente con nuevo tamaño
+  buildClouds();   // redibujar nubes con nuevo tamaño
+});
+</script>
+</body>
+</html>
