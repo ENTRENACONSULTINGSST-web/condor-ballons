@@ -2,98 +2,189 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CONDOR DUCKS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Luckiest+Guy&display=swap" rel="stylesheet">
 <style>
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-  margin: 0;
   overflow: hidden;
-  background: #87CEEB;
+  background: #5bc8f5;
   touch-action: none;
-  font-family: Arial;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: 'Fredoka One', cursive;
 }
+
 canvas { display: block; }
 
+/* ── HUD ─────────────────────────────────────────── */
 #ui {
   position: absolute;
-  top: 15px;
-  left: 15px;
+  top: 0; left: 0; right: 0;
   z-index: 10;
-  color: white;
-  text-shadow: 4px 4px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000;
-  font-size: 32px;
-  letter-spacing: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 18px 0;
   pointer-events: none;
 }
 
+.hud-box {
+  background: rgba(0,0,0,.35);
+  border: 3px solid rgba(255,255,255,.55);
+  border-radius: 16px;
+  padding: 8px 18px;
+  color: #fff;
+  font-family: 'Luckiest Guy', cursive;
+  font-size: clamp(18px, 4vw, 28px);
+  letter-spacing: 2px;
+  text-shadow: 3px 3px 0 #000;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.hud-label {
+  font-size: .55em;
+  opacity: .8;
+  display: block;
+  letter-spacing: 3px;
+}
+
+/* ── TIMER BAR ───────────────────────────────────── */
+#timerBar {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 7px;
+  background: #39ff14;
+  transition: width .9s linear, background .3s;
+  z-index: 11;
+}
+
+/* ── OVERLAYS ────────────────────────────────────── */
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,.75);
   display: none;
   justify-content: center;
   align-items: center;
   flex-direction: column;
   z-index: 100;
-  color: white;
+  background: rgba(10, 40, 80, .82);
+  backdrop-filter: blur(6px);
 }
-.overlay h1 {
-  font-size: 64px;
-  margin: 0 0 10px;
-  text-shadow: 4px 4px 0 #000;
-  letter-spacing: 4px;
+
+.overlay-title {
+  font-family: 'Luckiest Guy', cursive;
+  font-size: clamp(48px, 12vw, 96px);
+  color: #ffd700;
+  text-shadow: 6px 6px 0 #b85000, -2px -2px 0 #000;
+  letter-spacing: 5px;
+  margin-bottom: 6px;
+  text-align: center;
+  line-height: 1;
 }
-.overlay p {
-  font-size: 22px;
-  margin: 0 0 30px;
-  opacity: .8;
+
+.overlay-sub {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(15px, 3.5vw, 22px);
+  color: #fff;
+  opacity: .85;
+  margin-bottom: 36px;
+  text-align: center;
+  letter-spacing: 1px;
 }
-.overlay button {
-  padding: 18px 40px;
-  border: none;
-  border-radius: 12px;
-  font-size: 22px;
-  cursor: pointer;
-  background: #ffd24d;
-  color: #222;
-  font-weight: bold;
+
+.overlay-score {
+  font-family: 'Luckiest Guy', cursive;
+  font-size: clamp(22px, 5vw, 38px);
+  color: #39ff14;
+  text-shadow: 3px 3px 0 #006600;
+  margin-bottom: 28px;
   letter-spacing: 2px;
 }
-.overlay button:hover { background: #ffe07a; }
+
+.btn {
+  padding: 16px 44px;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Luckiest Guy', cursive;
+  font-size: clamp(18px, 4vw, 26px);
+  cursor: pointer;
+  letter-spacing: 3px;
+  background: #ffd700;
+  color: #222;
+  text-shadow: none;
+  box-shadow: 0 6px 0 #b85000, 0 8px 16px rgba(0,0,0,.4);
+  transition: transform .1s, box-shadow .1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #b85000, 0 3px 8px rgba(0,0,0,.3);
+}
+
+/* instruccion */
+.hint {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(12px, 2.5vw, 16px);
+  color: rgba(255,255,255,.6);
+  margin-top: 18px;
+  letter-spacing: 1px;
+}
+
 </style>
 </head>
 <body>
 
+<!-- HUD -->
 <div id="ui">
-  PUNTOS: <span id="score">0</span><br>
-  TIEMPO: <span id="time">60</span>
+  <div class="hud-box">
+    <span class="hud-label">PUNTOS</span>
+    <span id="score">0</span>
+  </div>
+  <div class="hud-box" id="timerBox">
+    <span class="hud-label">TIEMPO</span>
+    <span id="time">60</span>
+  </div>
 </div>
+<div id="timerBar" style="width:100%"></div>
 
-<!-- Pantalla de inicio -->
+<!-- Inicio -->
 <div id="startScreen" class="overlay" style="display:flex">
-  <h1>CONDOR DUCKS</h1>
-  <p>Revienta globos · Evita los cóndores</p>
-  <button onclick="startGame()">JUGAR</button>
+  <div class="overlay-title">CONDOR<br>DUCKS</div>
+  <div class="overlay-sub">Revienta globos · Esquiva los cóndores</div>
+  <button class="btn" onclick="startGame()">▶ JUGAR</button>
+  <div class="hint">Toca / Haz click para disparar</div>
 </div>
 
 <!-- Game Over -->
 <div id="gameOver" class="overlay">
-  <h1>GAME OVER</h1>
-  <p id="finalScore">PUNTAJE: 0</p>
-  <button onclick="location.reload()">REINICIAR</button>
+  <div class="overlay-title">GAME<br>OVER</div>
+  <div class="overlay-score" id="finalScore">PUNTAJE: 0</div>
+  <button class="btn" onclick="location.reload()">↺ REINICIAR</button>
 </div>
 
 <canvas id="game"></canvas>
 
 <script>
+/* ═══════════════════════════════════════════════════════
+   CONDOR DUCKS — motor de juego
+   ═══════════════════════════════════════════════════════ */
+
 const canvas = document.getElementById("game");
 const ctx    = canvas.getContext("2d");
 
 canvas.width  = innerWidth;
 canvas.height = innerHeight;
 
-const uiScore = document.getElementById("score");
-const uiTime  = document.getElementById("time");
+const uiScore    = document.getElementById("score");
+const uiTime     = document.getElementById("time");
+const timerBar   = document.getElementById("timerBar");
+const timerBox   = document.getElementById("timerBox");
 
 let score      = 0;
 let gameRunning = false;
@@ -103,67 +194,335 @@ let balloonIntervalId = null;
 let condorIntervalId  = null;
 let timerIntervalId   = null;
 
-// ─── Gradiente de fondo (creado una sola vez) ─────────────────────────────
+/* ── FONDO ────────────────────────────────────────────── */
 let bgGradient = null;
+
 function buildGradient() {
   bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  bgGradient.addColorStop(0, "#87CEEB");
-  bgGradient.addColorStop(1, "#dff6ff");
+  bgGradient.addColorStop(0,   "#1a8fd1");
+  bgGradient.addColorStop(0.5, "#5bc8f5");
+  bgGradient.addColorStop(1,   "#a8e6ff");
 }
 buildGradient();
 
-// ─── Canvas offscreen para nubes estáticas ────────────────────────────────
-let cloudCanvas = null;
-function buildClouds() {
-  cloudCanvas = document.createElement("canvas");
-  cloudCanvas.width  = canvas.width;
-  cloudCanvas.height = canvas.height;
-  const cc = cloudCanvas.getContext("2d");
-  cc.fillStyle = "rgba(255,255,255,.5)";
-  for (let i = 0; i < 6; i++) {
-    cc.beginPath();
-    cc.arc(i * 350 + 100, 100, 40, 0, Math.PI * 2);
-    cc.arc(i * 350 + 140, 100, 50, 0, Math.PI * 2);
-    cc.arc(i * 350 + 180, 100, 40, 0, Math.PI * 2);
-    cc.fill();
+/* ── NUBES ANIMADAS ───────────────────────────────────── */
+const clouds = [];
+
+function initClouds() {
+  clouds.length = 0;
+  for (let i = 0; i < 9; i++) {
+    clouds.push({
+      x:      Math.random() * canvas.width,
+      y:      20 + Math.random() * (canvas.height * 0.45),
+      scale:  0.6 + Math.random() * 1.1,
+      speed:  0.18 + Math.random() * 0.35,
+      alpha:  0.55 + Math.random() * 0.35
+    });
   }
 }
-buildClouds();
+initClouds();
 
-// ─── GLOBOS ───────────────────────────────────────────────────────────────
+function drawCloud(x, y, scale, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(x,           y,      38 * scale, 0, Math.PI * 2);
+  ctx.arc(x + 44*scale, y - 12*scale, 30 * scale, 0, Math.PI * 2);
+  ctx.arc(x + 80*scale, y,      36 * scale, 0, Math.PI * 2);
+  ctx.arc(x + 44*scale, y + 16*scale, 26 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function updateClouds() {
+  for (const c of clouds) {
+    c.x += c.speed;
+    if (c.x > canvas.width + 200) c.x = -200;
+    drawCloud(c.x, c.y, c.scale, c.alpha);
+  }
+}
+
+/* ── SUELO ────────────────────────────────────────────── */
+function drawGround() {
+  // franja de hierba
+  const gh = Math.max(canvas.height * 0.08, 50);
+  const gy = canvas.height - gh;
+  const gGrad = ctx.createLinearGradient(0, gy, 0, canvas.height);
+  gGrad.addColorStop(0, "#4caf50");
+  gGrad.addColorStop(1, "#2e7d32");
+  ctx.fillStyle = gGrad;
+  ctx.fillRect(0, gy, canvas.width, gh);
+
+  // línea de horizonte
+  ctx.strokeStyle = "#388e3c";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, gy);
+  ctx.lineTo(canvas.width, gy);
+  ctx.stroke();
+}
+
+function drawBackground() {
+  ctx.fillStyle = bgGradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  updateClouds();
+  drawGround();
+}
+
+/* ── GLOBOS ───────────────────────────────────────────── */
 const balloons = [];
-const colors = ["#ff4d4d","#ffd24d","#4dd2ff","#66ff66","#ff66ff","#ff884d"];
+const BALLOON_COLORS = ["#ff4d4d","#ffd24d","#4dd2ff","#66ff66","#ff66ff","#ff884d","#ff6b35"];
 
 function createBalloon() {
   balloons.push({
-    x:           Math.random() * canvas.width,
+    x:           40 + Math.random() * (canvas.width - 80),
     y:           canvas.height + 100,
-    radius:      30 + Math.random() * 20,
-    color:       colors[Math.floor(Math.random() * colors.length)],
-    speed:       1 + Math.random() * 2,
-    sway:        Math.random() * 2,
+    radius:      28 + Math.random() * 22,
+    color:       BALLOON_COLORS[Math.floor(Math.random() * BALLOON_COLORS.length)],
+    speed:       1.2 + Math.random() * 2.2,
+    sway:        0.5 + Math.random() * 1.8,
+    swayOffset:  Math.random() * Math.PI * 2,
     explode:     false,
-    explodeSize: 0
+    explodeSize: 0,
+    explodeAlpha: 1
   });
 }
 
-// ─── CÓNDORES ─────────────────────────────────────────────────────────────
+function drawBalloons() {
+  const t = Date.now();
+  for (let i = balloons.length - 1; i >= 0; i--) {
+    const b = balloons[i];
+    b.y -= b.speed;
+    b.x += Math.sin(t * 0.001 * b.sway + b.swayOffset) * 0.8;
+    b.speed += 0.0008;
+
+    if (b.explode) {
+      b.explodeSize  += 5;
+      b.explodeAlpha -= 0.05;
+      ctx.save();
+      ctx.globalAlpha = Math.max(b.explodeAlpha, 0);
+
+      // anillo exterior
+      ctx.beginPath();
+      ctx.fillStyle = "orange";
+      ctx.arc(b.x, b.y, b.explodeSize, 0, Math.PI * 2);
+      ctx.fill();
+
+      // centro brillante
+      ctx.beginPath();
+      ctx.fillStyle = "#ffe066";
+      ctx.arc(b.x, b.y, b.explodeSize * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+      if (b.explodeAlpha <= 0) { balloons.splice(i, 1); }
+      continue;
+    }
+
+    // Cuerda ondulante
+    ctx.strokeStyle = "rgba(80,60,40,.7)";
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y + b.radius);
+    ctx.quadraticCurveTo(
+      b.x + Math.sin(t * 0.002) * 8,
+      b.y + b.radius + 25,
+      b.x + Math.sin(t * 0.003) * 5,
+      b.y + b.radius + 48
+    );
+    ctx.stroke();
+
+    // Globo
+    ctx.beginPath();
+    ctx.fillStyle = b.color;
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Brillo
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(255,255,255,.45)";
+    ctx.arc(b.x - b.radius * 0.3, b.y - b.radius * 0.3, b.radius * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nudo inferior
+    ctx.fillStyle = b.color;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y + b.radius - 2, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (b.y < -120) { balloons.splice(i, 1); }
+  }
+}
+
+/* ── CÓNDORES ─────────────────────────────────────────── */
 const condors = [];
 
+/*
+  fromRight: true  → entra por la derecha, vuela a la izquierda (normal)
+  fromRight: false → entra por la izquierda, vuela a la derecha (espejado)
+*/
 function createCondor() {
+  const fromRight = Math.random() > 0.5;
   condors.push({
-    x:         canvas.width + 200,
-    y:         Math.random() * (canvas.height - 300) + 100,
-    width:     140,
-    height:    100,
-    speed:     2 + Math.random() * 1.5,
-    wing:      0,
-    dead:      false,
-    fallSpeed: 0
+    x:          fromRight ? canvas.width + 200 : -340,
+    y:          80 + Math.random() * (canvas.height * 0.55),
+    speed:      2.2 + Math.random() * 1.6,
+    wing:       0,
+    dead:       false,
+    fallSpeed:  0,
+    fromRight
   });
 }
 
-// ─── DISPAROS ─────────────────────────────────────────────────────────────
+/* hitbox del cóndor en coordenadas del mundo:
+   el sprite se dibuja con translate(c.x, c.y)
+   cuerpo ocupa aprox x[-85..65], y[0..55]
+   ala span: x[-100..120]
+   usamos un rect central conservador */
+function condorHitBox(c) {
+  if (c.fromRight) {
+    return { x: c.x - 85, y: c.y - 30, w: 200, h: 80 };
+  } else {
+    // sprite espejado con scaleX(-1): origen sigue en c.x
+    return { x: c.x - 115, y: c.y - 30, w: 200, h: 80 };
+  }
+}
+
+function drawCondors() {
+  for (let i = condors.length - 1; i >= 0; i--) {
+    const c = condors[i];
+
+    if (!c.dead) {
+      c.x    += c.fromRight ? -c.speed : c.speed;
+      c.wing += 0.18;
+    } else {
+      c.fallSpeed += 0.45;
+      c.y         += c.fallSpeed;
+      c.x         += c.fromRight ? -1 : 1;
+    }
+
+    ctx.save();
+    ctx.translate(c.x, c.y);
+
+    // Espejo si viene de la izquierda
+    if (!c.fromRight) {
+      ctx.scale(-1, 1);
+    }
+
+    // ── Alas ──────────────────────────────────────
+    ctx.fillStyle = "#1a1a1a";
+
+    // Ala izquierda (trasera)
+    ctx.beginPath();
+    ctx.ellipse(-60, Math.sin(c.wing) * 22, 75, 22, -0.28, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ala derecha (delantera)
+    ctx.beginPath();
+    ctx.ellipse(60, -Math.sin(c.wing) * 22, 75, 22, 0.28, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── Cuerpo ─────────────────────────────────────
+    ctx.fillStyle = "#2a2a2a";
+    ctx.beginPath();
+    ctx.ellipse(0, 22, 52, 32, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pechera blanca
+    ctx.fillStyle = "rgba(255,255,255,.18)";
+    ctx.beginPath();
+    ctx.ellipse(5, 20, 28, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── Cuello / gorguera blanca ───────────────────
+    ctx.fillStyle = "#e8e8e8";
+    ctx.beginPath();
+    ctx.arc(42, -4, 22, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── Cabeza ────────────────────────────────────
+    ctx.fillStyle = "#c0604a";
+    ctx.beginPath();
+    ctx.arc(64, -14, 17, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cresta
+    ctx.fillStyle = "#e07050";
+    ctx.beginPath();
+    ctx.moveTo(64, -31);
+    ctx.lineTo(58, -20);
+    ctx.lineTo(70, -20);
+    ctx.fill();
+
+    // ── Pico ──────────────────────────────────────
+    ctx.fillStyle = "#d4a044";
+    ctx.beginPath();
+    ctx.moveTo(78, -14);
+    ctx.lineTo(100, -8);
+    ctx.lineTo(78, -2);
+    ctx.closePath();
+    ctx.fill();
+    // gancho del pico
+    ctx.fillStyle = "#b8882a";
+    ctx.beginPath();
+    ctx.moveTo(96, -8);
+    ctx.lineTo(104, -4);
+    ctx.lineTo(96, -2);
+    ctx.closePath();
+    ctx.fill();
+
+    // ── Ojo ───────────────────────────────────────
+    ctx.fillStyle = "#ffdd44";
+    ctx.beginPath();
+    ctx.arc(66, -16, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.arc(67, -16, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    // brillo ojo
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(68, -17, 1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── Patas (solo si muerto) ────────────────────
+    if (c.dead) {
+      ctx.strokeStyle = "#d4a044";
+      ctx.lineWidth = 3;
+      // pata 1
+      ctx.beginPath();
+      ctx.moveTo(-10, 50);
+      ctx.lineTo(-10, 72);
+      ctx.lineTo(-22, 82);
+      ctx.moveTo(-10, 72);
+      ctx.lineTo(2, 82);
+      ctx.stroke();
+      // pata 2
+      ctx.beginPath();
+      ctx.moveTo(14, 50);
+      ctx.lineTo(14, 72);
+      ctx.lineTo(2, 82);
+      ctx.moveTo(14, 72);
+      ctx.lineTo(26, 82);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // Eliminar si sale de pantalla
+    const outLeft  = c.fromRight  && c.x < -400;
+    const outRight = !c.fromRight && c.x >  canvas.width + 400;
+    const outDown  = c.y > canvas.height + 300;
+    if (outLeft || outRight || outDown) {
+      condors.splice(i, 1);
+    }
+  }
+}
+
+/* ── DISPAROS ─────────────────────────────────────────── */
 const shots = [];
 
 canvas.addEventListener("touchstart", handleInput, { passive: false });
@@ -177,228 +536,108 @@ function handleInput(e) {
   const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
   const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
 
-  shots.push({ x, y, radius: 10, life: 20 });
+  shots.push({ x, y, radius: 8, life: 18 });
 
-  let hitBalloon  = false;
-  let hitCondor   = false;
+  let hitBalloon = false;
+  let hitCondor  = false;
 
-  // ── Impacto globos
+  // Impacto globos
   for (let i = balloons.length - 1; i >= 0; i--) {
     const b  = balloons[i];
-    const dx = x - b.x;
-    const dy = y - b.y;
-    if (Math.sqrt(dx * dx + dy * dy) < b.radius && !b.explode) {
-      b.explode   = true;
-      score      += 10;
+    if (b.explode) continue;
+    const dx = x - b.x, dy = y - b.y;
+    if (Math.sqrt(dx * dx + dy * dy) < b.radius + 8) {
+      b.explode  = true;
+      score     += 10;
       uiScore.innerText = score;
-      hitBalloon  = true;
-      break; // un solo globo por disparo
-    }
-  }
-
-  // ── Impacto cóndor
-  // Ajuste de hitbox: el cóndor se dibuja desde c.x-30 por el ala izquierda
-  for (let i = condors.length - 1; i >= 0; i--) {
-    const c = condors[i];
-    if (!c.dead &&
-        x > c.x - 30 &&
-        x < c.x + c.width - 30 &&
-        y > c.y &&
-        y < c.y + c.height) {
-      c.dead    = true;
-      hitCondor = true;
-      setTimeout(gameOver, 800);
+      hitBalloon = true;
       break;
     }
   }
 
-  // Vibración: una sola llamada con la intensidad correcta
-  if (navigator.vibrate) {
-    if (hitCondor)      navigator.vibrate([200, 100, 200]);
-    else if (hitBalloon) navigator.vibrate([50, 30, 50]);
-    else                 navigator.vibrate(20);
-  }
-}
-
-// ─── FONDO ────────────────────────────────────────────────────────────────
-function drawBackground() {
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(cloudCanvas, 0, 0);
-}
-
-// ─── DIBUJA GLOBOS ────────────────────────────────────────────────────────
-function drawBalloons() {
-  // Iterar en reversa para poder hacer splice sin desfase de índices
-  for (let i = balloons.length - 1; i >= 0; i--) {
-    const b = balloons[i];
-
-    b.y -= b.speed;
-    b.x += Math.sin(Date.now() * 0.001 * b.sway);
-    b.speed += 0.001;
-
-    if (b.explode) {
-      b.explodeSize += 4;
-      ctx.beginPath();
-      ctx.fillStyle = "orange";
-      ctx.arc(b.x, b.y, b.explodeSize, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.fillStyle = "yellow";
-      ctx.arc(b.x, b.y, b.explodeSize / 2, 0, Math.PI * 2);
-      ctx.fill();
-
-      if (b.explodeSize > 40) { balloons.splice(i, 1); continue; }
-    } else {
-      // Cuerda
-      ctx.strokeStyle = "#555";
-      ctx.lineWidth   = 2;
-      ctx.beginPath();
-      ctx.moveTo(b.x, b.y + b.radius);
-      ctx.lineTo(b.x + Math.sin(Date.now() * 0.003) * 10, b.y + b.radius + 40);
-      ctx.stroke();
-
-      // Globo
-      ctx.beginPath();
-      ctx.fillStyle = b.color;
-      ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Brillo
-      ctx.beginPath();
-      ctx.fillStyle = "rgba(255,255,255,.5)";
-      ctx.arc(b.x - b.radius / 3, b.y - b.radius / 3, b.radius / 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    if (b.y < -100) { balloons.splice(i, 1); }
-  }
-}
-
-// ─── DIBUJA CÓNDORES ──────────────────────────────────────────────────────
-function drawCondors() {
+  // Impacto cóndor
   for (let i = condors.length - 1; i >= 0; i--) {
-    const c = condors[i];
-
-    if (!c.dead) {
-      c.x    -= c.speed;
-      c.wing += 0.2;
-    } else {
-      c.fallSpeed += 0.4;
-      c.y += c.fallSpeed;
-      c.x -= 1;
+    const c  = condors[i];
+    if (c.dead) continue;
+    const hb = condorHitBox(c);
+    if (x >= hb.x && x <= hb.x + hb.w && y >= hb.y && y <= hb.y + hb.h) {
+      c.dead    = true;
+      hitCondor = true;
+      setTimeout(gameOver, 900);
+      break;
     }
+  }
 
-    ctx.save();
-    ctx.translate(c.x, c.y);
-
-    // Ala izquierda
-    ctx.fillStyle = "#111";
-    ctx.beginPath();
-    ctx.ellipse(-30, Math.sin(c.wing) * 20, 70, 25, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Ala derecha
-    ctx.beginPath();
-    ctx.ellipse(50, -Math.sin(c.wing) * 20, 70, 25, 0.3, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Cuerpo
-    ctx.fillStyle = "#222";
-    ctx.beginPath();
-    ctx.ellipse(10, 20, 55, 35, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Cuello
-    ctx.fillStyle = "white";
-    ctx.beginPath();
-    ctx.arc(50, 0, 25, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Cabeza
-    ctx.fillStyle = "#b85f50";
-    ctx.beginPath();
-    ctx.arc(75, -10, 18, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Pico
-    ctx.fillStyle = "#e0b35c";
-    ctx.beginPath();
-    ctx.moveTo(88, -10);
-    ctx.lineTo(110, -4);
-    ctx.lineTo(88, 2);
-    ctx.fill();
-
-    // Ojo
-    ctx.fillStyle = "white";
-    ctx.beginPath();
-    ctx.arc(78, -12, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "black";
-    ctx.beginPath();
-    ctx.arc(79, -12, 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-
-    if (c.x < -300 || c.y > canvas.height + 300) {
-      condors.splice(i, 1);
-    }
+  if (navigator.vibrate) {
+    if (hitCondor)       navigator.vibrate([200, 80, 200]);
+    else if (hitBalloon) navigator.vibrate([40, 20, 40]);
+    else                 navigator.vibrate(15);
   }
 }
 
-// ─── DIBUJA DISPAROS ──────────────────────────────────────────────────────
 function drawShots() {
   for (let i = shots.length - 1; i >= 0; i--) {
     const s = shots[i];
     s.life--;
-    s.radius += 2;
-
+    s.radius += 2.5;
+    const alpha = s.life / 18;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth   = 3.5;
     ctx.beginPath();
-    ctx.strokeStyle = "white";
-    ctx.lineWidth   = 4;
     ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
     ctx.stroke();
-
+    ctx.restore();
     if (s.life <= 0) { shots.splice(i, 1); }
   }
 }
 
-// ─── GAME LOOP ────────────────────────────────────────────────────────────
+/* ── GAME LOOP ─────────────────────────────────────────── */
 function update() {
   if (!gameRunning) return;
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBackground();
   drawBalloons();
   drawCondors();
   drawShots();
-
   rafId = requestAnimationFrame(update);
 }
 
-// ─── INICIAR ──────────────────────────────────────────────────────────────
+/* ── INICIAR ───────────────────────────────────────────── */
 function startGame() {
   document.getElementById("startScreen").style.display = "none";
   gameRunning = true;
 
-  balloonIntervalId = setInterval(() => { if (gameRunning) createBalloon(); }, 600);
-  condorIntervalId  = setInterval(() => { if (gameRunning) createCondor();  }, 2500);
+  balloonIntervalId = setInterval(() => { if (gameRunning) createBalloon(); }, 580);
+  condorIntervalId  = setInterval(() => { if (gameRunning) createCondor();  }, 2400);
 
   timerIntervalId = setInterval(() => {
     if (!gameRunning) return;
     timeLeft--;
     uiTime.innerText = timeLeft;
+
+    // barra de tiempo
+    const pct = (timeLeft / 60) * 100;
+    timerBar.style.width = pct + "%";
+
+    // color urgencia
+    if (timeLeft <= 10) {
+      timerBar.style.background = "#ff4d4d";
+      timerBox.style.color      = "#ff6b6b";
+    } else if (timeLeft <= 20) {
+      timerBar.style.background = "#ffd24d";
+    }
+
     if (timeLeft <= 0) { clearInterval(timerIntervalId); gameOver(); }
   }, 1000);
 
   rafId = requestAnimationFrame(update);
 }
 
-// ─── GAME OVER ────────────────────────────────────────────────────────────
+/* ── GAME OVER ─────────────────────────────────────────── */
 function gameOver() {
-  if (!gameRunning) return; // evita doble llamada
+  if (!gameRunning) return;
   gameRunning = false;
 
   cancelAnimationFrame(rafId);
@@ -406,16 +645,16 @@ function gameOver() {
   clearInterval(condorIntervalId);
   clearInterval(timerIntervalId);
 
-  document.getElementById("finalScore").textContent = "PUNTAJE: " + score;
-  document.getElementById("gameOver").style.display = "flex";
+  document.getElementById("finalScore").textContent = "PUNTAJE FINAL: " + score;
+  document.getElementById("gameOver").style.display  = "flex";
 }
 
-// ─── RESPONSIVE ───────────────────────────────────────────────────────────
+/* ── RESPONSIVE ────────────────────────────────────────── */
 window.addEventListener("resize", () => {
   canvas.width  = innerWidth;
   canvas.height = innerHeight;
-  buildGradient(); // reconstruir gradiente con nuevo tamaño
-  buildClouds();   // redibujar nubes con nuevo tamaño
+  buildGradient();
+  initClouds();
 });
 </script>
 </body>
