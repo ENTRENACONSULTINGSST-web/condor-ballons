@@ -5,66 +5,122 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CONDOR DUCKS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Luckiest+Guy&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
 <style>
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   overflow: hidden;
-  background: #5bc8f5;
+  background: #0d1b2a;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Barlow', sans-serif;
 }
 
 canvas { display: block; }
 
-/* ── HUD ─────────────────────────────────────────── */
-#ui {
+/* ── HUD ───────────────────────────────────────── */
+#hud {
   position: absolute;
   top: 0; left: 0; right: 0;
   z-index: 10;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 14px 18px 0;
   pointer-events: none;
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
-.hud-box {
-  background: rgba(0,0,0,.35);
-  border: 3px solid rgba(255,255,255,.55);
-  border-radius: 16px;
-  padding: 8px 18px;
+.hud-left { display:flex; flex-direction:column; gap:4px; }
+
+.hud-panel {
+  background: rgba(5,10,20,.65);
+  border: 1.5px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 6px 14px;
   color: #fff;
-  font-family: 'Luckiest Guy', cursive;
-  font-size: clamp(18px, 4vw, 28px);
-  letter-spacing: 2px;
-  text-shadow: 3px 3px 0 #000;
-  line-height: 1.2;
-  text-align: center;
 }
 
 .hud-label {
-  font-size: .55em;
-  opacity: .8;
-  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(9px, 1.8vw, 11px);
   letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: .55;
+  display: block;
 }
 
-/* ── TIMER BAR ───────────────────────────────────── */
-#timerBar {
+.hud-value {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(22px, 4.5vw, 30px);
+  font-weight: 900;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+/* Timer central */
+#timerPanel {
   position: absolute;
-  bottom: 0; left: 0;
-  height: 7px;
-  background: #39ff14;
-  transition: width .9s linear, background .3s;
-  z-index: 11;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(5,10,20,.75);
+  border: 1.5px solid rgba(255,255,255,.15);
+  border-radius: 12px;
+  padding: 8px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+#timerPanel .hud-label { text-align:center; }
+#timerPanel .hud-value { font-size: clamp(26px,5vw,38px); color:#fff; }
+#timerPanel .hud-value span { font-size:.6em; opacity:.7; }
+
+/* Barra de tiempo bajo el timer */
+#timeBarWrap {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,.12);
+  border-radius: 2px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+#timeBar {
+  height: 100%;
+  width: 100%;
+  background: #00e5ff;
+  border-radius: 2px;
+  transition: width .9s linear, background .4s;
 }
 
-/* ── OVERLAYS ────────────────────────────────────── */
+/* Botones derecha */
+.hud-right {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  pointer-events: all;
+}
+
+.icon-btn {
+  background: rgba(5,10,20,.65);
+  border: 1.5px solid rgba(255,255,255,.15);
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 17px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s;
+}
+.icon-btn:active { background: rgba(255,255,255,.15); }
+
+/* ── OVERLAYS ──────────────────────────────────── */
 .overlay {
   position: absolute;
   inset: 0;
@@ -73,219 +129,423 @@ canvas { display: block; }
   align-items: center;
   flex-direction: column;
   z-index: 100;
-  background: rgba(10, 40, 80, .82);
-  backdrop-filter: blur(6px);
+  background: rgba(5, 12, 28, .88);
+  backdrop-filter: blur(8px);
+  padding: 24px;
 }
 
-.overlay-title {
-  font-family: 'Luckiest Guy', cursive;
-  font-size: clamp(48px, 12vw, 96px);
-  color: #ffd700;
-  text-shadow: 6px 6px 0 #b85000, -2px -2px 0 #000;
+/* INICIO */
+#startScreen .eyebrow {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(10px,2vw,13px);
   letter-spacing: 5px;
+  color: #ff5533;
+  text-transform: uppercase;
   margin-bottom: 6px;
+}
+#startScreen h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: clamp(52px, 13vw, 100px);
+  color: #ffd700;
+  letter-spacing: 3px;
+  line-height: .95;
   text-align: center;
+  margin-bottom: 14px;
+  text-shadow: 4px 4px 0 rgba(0,0,0,.5);
+}
+#startScreen .tagline {
+  color: rgba(255,255,255,.75);
+  font-size: clamp(13px,2.5vw,17px);
+  text-align: center;
+  margin-bottom: 30px;
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+/* PAUSA */
+#pauseScreen h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: clamp(40px,10vw,72px);
+  color: #fff;
+  letter-spacing: 4px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+#pauseScreen p {
+  color: rgba(255,255,255,.6);
+  font-size: clamp(13px,2.5vw,16px);
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+/* GAME OVER */
+#gameOver .go-eyebrow {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(9px,1.8vw,12px);
+  letter-spacing: 5px;
+  color: #ff5533;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+#gameOver h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: clamp(48px,12vw,88px);
+  color: #fff;
+  letter-spacing: 4px;
+  text-align: center;
+  margin-bottom: 20px;
   line-height: 1;
 }
-
-.overlay-sub {
-  font-family: 'Fredoka One', cursive;
-  font-size: clamp(15px, 3.5vw, 22px);
-  color: #fff;
-  opacity: .85;
-  margin-bottom: 36px;
+.go-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.go-stat {
+  background: rgba(255,255,255,.07);
+  border: 1.5px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  padding: 14px 24px;
   text-align: center;
-  letter-spacing: 1px;
+  min-width: 110px;
 }
-
-.overlay-score {
-  font-family: 'Luckiest Guy', cursive;
-  font-size: clamp(22px, 5vw, 38px);
-  color: #39ff14;
-  text-shadow: 3px 3px 0 #006600;
-  margin-bottom: 28px;
+.go-stat .stat-val {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(30px,6vw,44px);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+}
+.go-stat .stat-lbl {
+  font-size: 10px;
   letter-spacing: 2px;
+  color: rgba(255,255,255,.45);
+  text-transform: uppercase;
+  display: block;
+  margin-top: 3px;
+}
+#gameOver p.go-hint {
+  color: rgba(255,255,255,.45);
+  font-size: clamp(11px,2vw,13px);
+  text-align: center;
+  margin-bottom: 26px;
+  max-width: 280px;
+  line-height: 1.5;
 }
 
+/* BOTONES */
 .btn {
-  padding: 16px 44px;
+  padding: 15px 38px;
   border: none;
   border-radius: 50px;
-  font-family: 'Luckiest Guy', cursive;
-  font-size: clamp(18px, 4vw, 26px);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: clamp(16px,3.5vw,22px);
+  letter-spacing: 2px;
+  text-transform: uppercase;
   cursor: pointer;
-  letter-spacing: 3px;
-  background: #ffd700;
-  color: #222;
-  text-shadow: none;
-  box-shadow: 0 6px 0 #b85000, 0 8px 16px rgba(0,0,0,.4);
-  transition: transform .1s, box-shadow .1s;
   -webkit-tap-highlight-color: transparent;
+  transition: transform .1s, filter .1s;
 }
-.btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 #b85000, 0 3px 8px rgba(0,0,0,.3);
-}
+.btn:active { transform: scale(.96); filter: brightness(.9); }
 
-/* instruccion */
-.hint {
-  font-family: 'Fredoka One', cursive;
-  font-size: clamp(12px, 2.5vw, 16px);
-  color: rgba(255,255,255,.6);
-  margin-top: 18px;
-  letter-spacing: 1px;
+.btn-primary {
+  background: #ff5533;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(255,85,51,.4);
 }
-
+.btn-secondary {
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,.2);
+}
 </style>
 </head>
 <body>
 
 <!-- HUD -->
-<div id="ui">
-  <div class="hud-box">
-    <span class="hud-label">PUNTOS</span>
-    <span id="score">0</span>
+<div id="hud">
+  <div class="hud-left">
+    <div class="hud-panel">
+      <span class="hud-label">Puntos</span>
+      <div class="hud-value" id="score">0</div>
+    </div>
+    <div class="hud-panel" style="padding:5px 14px">
+      <span class="hud-label">🏅 Rec: <span id="record">0</span></span>
+    </div>
   </div>
-  <div class="hud-box" id="timerBox">
-    <span class="hud-label">TIEMPO</span>
-    <span id="time">60</span>
+
+  <div id="timerPanel">
+    <span class="hud-label">⏱ Tiempo</span>
+    <div class="hud-value" id="time">60<span>s</span></div>
+    <div id="timeBarWrap"><div id="timeBar"></div></div>
+  </div>
+
+  <div class="hud-right">
+    <div class="icon-btn" id="soundBtn" onclick="toggleSound()">🔊</div>
+    <div class="icon-btn" onclick="togglePause()">⏸</div>
   </div>
 </div>
-<div id="timerBar" style="width:100%"></div>
 
 <!-- Inicio -->
 <div id="startScreen" class="overlay" style="display:flex">
-  <div class="overlay-title">CONDOR<br>DUCKS</div>
-  <div class="overlay-sub">Revienta globos · Esquiva los cóndores</div>
-  <button class="btn" onclick="startGame()">▶ JUGAR</button>
-  <div class="hint">Toca / Haz click para disparar</div>
+  <div class="eyebrow">Cordillera Andina Extrema</div>
+  <h1>CONDOR<br>DUCKS</h1>
+  <p class="tagline">¡Pon a prueba tu agudeza visual! Dispara a los globos flotantes antes de que escapen, pero evita tocar a los majestuosos cóndores.</p>
+  <button class="btn btn-primary" onclick="startGame()">INICIAR ›</button>
+</div>
+
+<!-- Pausa -->
+<div id="pauseScreen" class="overlay">
+  <h2>BÚSQUEDA<br>PAUSADA</h2>
+  <p>Los globos andinos están suspendidos. Toma un respiro y prepárate para reanudar la cacería.</p>
+  <button class="btn btn-secondary" onclick="togglePause()">REANUDAR JUEGO</button>
 </div>
 
 <!-- Game Over -->
 <div id="gameOver" class="overlay">
-  <div class="overlay-title">GAME<br>OVER</div>
-  <div class="overlay-score" id="finalScore">PUNTAJE: 0</div>
-  <button class="btn" onclick="location.reload()">↺ REINICIAR</button>
+  <div class="go-eyebrow">Fin de la sesión</div>
+  <h2>GAME<br>OVER</h2>
+  <div class="go-stats">
+    <div class="go-stat">
+      <div class="stat-val" id="finalScore">0</div>
+      <span class="stat-lbl">Puntos</span>
+    </div>
+    <div class="go-stat">
+      <div class="stat-val" id="finalAcc">0%</div>
+      <span class="stat-lbl">Puntería</span>
+    </div>
+  </div>
+  <p class="go-hint">Sigue practicando para superar tu récord. Intenta apuntar a los globos con prudencia.</p>
+  <button class="btn btn-primary" onclick="location.reload()">↺ REINICIAR BÚSQUEDA</button>
 </div>
 
 <canvas id="game"></canvas>
 
 <script>
-/* ═══════════════════════════════════════════════════════
-   CONDOR DUCKS — motor de juego
-   ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   CONDOR DUCKS
+   ═══════════════════════════════════════════ */
 
 const canvas = document.getElementById("game");
 const ctx    = canvas.getContext("2d");
-
 canvas.width  = innerWidth;
 canvas.height = innerHeight;
 
-const uiScore    = document.getElementById("score");
-const uiTime     = document.getElementById("time");
-const timerBar   = document.getElementById("timerBar");
-const timerBox   = document.getElementById("timerBox");
+const elScore    = document.getElementById("score");
+const elTime     = document.getElementById("time");
+const elRecord   = document.getElementById("record");
+const elTimeBar  = document.getElementById("timeBar");
+const elSoundBtn = document.getElementById("soundBtn");
 
-let score      = 0;
+let score       = 0;
+let shots_total = 0;
+let shots_hit   = 0;
 let gameRunning = false;
-let timeLeft   = 60;
-let rafId      = null;
-let balloonIntervalId = null;
-let condorIntervalId  = null;
-let timerIntervalId   = null;
+let paused      = false;
+let soundOn     = true;
+let timeLeft    = 60;
+let record      = parseInt(localStorage.getItem("cd_record") || "0");
+let rafId       = null;
+let balloonInt  = null;
+let condorInt   = null;
+let timerInt    = null;
 
-/* ── FONDO ────────────────────────────────────────────── */
-let bgGradient = null;
+elRecord.textContent = record;
 
-function buildGradient() {
-  bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  bgGradient.addColorStop(0,   "#1a8fd1");
-  bgGradient.addColorStop(0.5, "#5bc8f5");
-  bgGradient.addColorStop(1,   "#a8e6ff");
+/* ── SONIDOS WEB AUDIO ──────────────────── */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
 }
-buildGradient();
+function beep(freq, dur, type = "sine", vol = 0.3) {
+  if (!soundOn) return;
+  try {
+    const ac  = getAudio();
+    const osc = ac.createOscillator();
+    const g   = ac.createGain();
+    osc.connect(g); g.connect(ac.destination);
+    osc.type = type;
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+    osc.start(); osc.stop(ac.currentTime + dur);
+  } catch(e) {}
+}
+function sfxPop()    { beep(520,0.12,"square",.25); beep(820,0.08,"sine",.15); }
+function sfxDanger() { beep(180,0.35,"sawtooth",.35); beep(130,0.5,"sawtooth",.3); }
+function sfxMiss()   { beep(300,0.08,"triangle",.1); }
 
-/* ── NUBES ANIMADAS ───────────────────────────────────── */
+function toggleSound() {
+  soundOn = !soundOn;
+  elSoundBtn.textContent = soundOn ? "🔊" : "🔇";
+}
+
+/* ── FONDO: MONTAÑAS ANDINAS ────────────── */
+let bgCanvas = null;
+
+function buildBackground(theme) {
+  bgCanvas = document.createElement("canvas");
+  bgCanvas.width  = canvas.width;
+  bgCanvas.height = canvas.height;
+  const bc = bgCanvas.getContext("2d");
+  const W  = canvas.width, H = canvas.height;
+
+  // Cielo degradado — tema "Amanecer" por defecto
+  const sky = bc.createLinearGradient(0, 0, 0, H * 0.75);
+  sky.addColorStop(0,    "#0d1b3e");
+  sky.addColorStop(0.45, "#1a2f5a");
+  sky.addColorStop(0.75, "#2d4a7a");
+  sky.addColorStop(1,    "#4a6fa5");
+  bc.fillStyle = sky;
+  bc.fillRect(0, 0, W, H);
+
+  // Luna / Sol
+  bc.fillStyle = "rgba(255,230,150,.15)";
+  bc.beginPath();
+  bc.arc(W * 0.72, H * 0.18, 55, 0, Math.PI * 2);
+  bc.fill();
+  bc.fillStyle = "rgba(255,230,150,.08)";
+  bc.beginPath();
+  bc.arc(W * 0.72, H * 0.18, 80, 0, Math.PI * 2);
+  bc.fill();
+
+  // Estrellas
+  bc.fillStyle = "rgba(255,255,255,.7)";
+  for (let i = 0; i < 60; i++) {
+    const sx = Math.random() * W;
+    const sy = Math.random() * H * 0.5;
+    const sr = 0.5 + Math.random() * 1.2;
+    bc.beginPath();
+    bc.arc(sx, sy, sr, 0, Math.PI * 2);
+    bc.fill();
+  }
+
+  // Montañas lejanas (capa 1 — más pequeñas, más claras)
+  bc.fillStyle = "#1e3560";
+  bc.beginPath();
+  bc.moveTo(0, H * 0.62);
+  const pts1 = [
+    [0.05, 0.44],[0.12, 0.52],[0.18, 0.38],[0.26, 0.48],
+    [0.33, 0.36],[0.40, 0.45],[0.48, 0.33],[0.55, 0.44],
+    [0.63, 0.38],[0.70, 0.50],[0.78, 0.35],[0.86, 0.46],
+    [0.93, 0.40],[1.0,  0.55]
+  ];
+  for (const [px,py] of pts1) bc.lineTo(px * W, py * H);
+  bc.lineTo(W, H); bc.lineTo(0, H); bc.closePath(); bc.fill();
+
+  // Nieve en picos lejanos
+  bc.fillStyle = "rgba(200,220,255,.25)";
+  for (const [px,py] of pts1.filter((_,i)=>i%2===0)) {
+    bc.beginPath();
+    bc.moveTo(px*W, py*H);
+    bc.lineTo(px*W - 12, py*H + 18);
+    bc.lineTo(px*W + 12, py*H + 18);
+    bc.closePath(); bc.fill();
+  }
+
+  // Montañas principales (capa 2 — más grandes, más oscuras)
+  bc.fillStyle = "#112244";
+  bc.beginPath();
+  bc.moveTo(0, H * 0.70);
+  const pts2 = [
+    [0, 0.60],[0.08, 0.70],[0.15, 0.52],[0.22, 0.65],
+    [0.30, 0.44],[0.38, 0.58],[0.46, 0.40],[0.54, 0.56],
+    [0.62, 0.46],[0.70, 0.60],[0.78, 0.42],[0.86, 0.55],
+    [0.94, 0.48],[1.0,  0.62]
+  ];
+  for (const [px,py] of pts2) bc.lineTo(px * W, py * H);
+  bc.lineTo(W, H); bc.lineTo(0, H); bc.closePath(); bc.fill();
+
+  // Nieve picos principales
+  bc.fillStyle = "rgba(220,235,255,.35)";
+  const snowPeaks = pts2.filter((_,i)=>[2,4,6,8,10,12].includes(i));
+  for (const [px,py] of snowPeaks) {
+    bc.beginPath();
+    bc.moveTo(px*W, py*H);
+    bc.lineTo(px*W - 18, py*H + 28);
+    bc.lineTo(px*W + 18, py*H + 28);
+    bc.closePath(); bc.fill();
+  }
+
+  // Árboles en la base
+  const groundY = H * 0.78;
+  bc.fillStyle = "#0a1a30";
+  for (let tx = 0; tx < W; tx += 28 + Math.random() * 20) {
+    const th = 20 + Math.random() * 35;
+    bc.beginPath();
+    bc.moveTo(tx, groundY);
+    bc.lineTo(tx - 9, groundY + th);
+    bc.lineTo(tx + 9, groundY + th);
+    bc.closePath(); bc.fill();
+  }
+
+  // Suelo
+  const gGrad = bc.createLinearGradient(0, groundY, 0, H);
+  gGrad.addColorStop(0, "#0f2035");
+  gGrad.addColorStop(1, "#060e1c");
+  bc.fillStyle = gGrad;
+  bc.fillRect(0, groundY, W, H - groundY);
+}
+buildBackground();
+
+/* ── NUBES ANIMADAS ─────────────────────── */
 const clouds = [];
-
 function initClouds() {
   clouds.length = 0;
-  for (let i = 0; i < 9; i++) {
+  const cloudY_max = canvas.height * 0.45;
+  for (let i = 0; i < 7; i++) {
     clouds.push({
-      x:      Math.random() * canvas.width,
-      y:      20 + Math.random() * (canvas.height * 0.45),
-      scale:  0.6 + Math.random() * 1.1,
-      speed:  0.18 + Math.random() * 0.35,
-      alpha:  0.55 + Math.random() * 0.35
+      x:     Math.random() * canvas.width,
+      y:     30 + Math.random() * cloudY_max,
+      scale: 0.5 + Math.random() * 1.0,
+      speed: 0.12 + Math.random() * 0.22,
+      alpha: 0.25 + Math.random() * 0.30
     });
   }
 }
 initClouds();
 
-function drawCloud(x, y, scale, alpha) {
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.arc(x,           y,      38 * scale, 0, Math.PI * 2);
-  ctx.arc(x + 44*scale, y - 12*scale, 30 * scale, 0, Math.PI * 2);
-  ctx.arc(x + 80*scale, y,      36 * scale, 0, Math.PI * 2);
-  ctx.arc(x + 44*scale, y + 16*scale, 26 * scale, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
-
-function updateClouds() {
+function drawClouds() {
   for (const c of clouds) {
-    c.x += c.speed;
-    if (c.x > canvas.width + 200) c.x = -200;
-    drawCloud(c.x, c.y, c.scale, c.alpha);
+    if (!paused) c.x += c.speed;
+    if (c.x > canvas.width + 300) c.x = -300;
+    ctx.save();
+    ctx.globalAlpha = c.alpha;
+    ctx.fillStyle   = "#a8c8e8";
+    ctx.beginPath();
+    ctx.arc(c.x,            c.y,          42*c.scale, 0, Math.PI*2);
+    ctx.arc(c.x+48*c.scale, c.y-14*c.scale, 33*c.scale, 0, Math.PI*2);
+    ctx.arc(c.x+86*c.scale, c.y,          38*c.scale, 0, Math.PI*2);
+    ctx.arc(c.x+46*c.scale, c.y+18*c.scale,28*c.scale, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
   }
 }
 
-/* ── SUELO ────────────────────────────────────────────── */
-function drawGround() {
-  // franja de hierba
-  const gh = Math.max(canvas.height * 0.08, 50);
-  const gy = canvas.height - gh;
-  const gGrad = ctx.createLinearGradient(0, gy, 0, canvas.height);
-  gGrad.addColorStop(0, "#4caf50");
-  gGrad.addColorStop(1, "#2e7d32");
-  ctx.fillStyle = gGrad;
-  ctx.fillRect(0, gy, canvas.width, gh);
-
-  // línea de horizonte
-  ctx.strokeStyle = "#388e3c";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0, gy);
-  ctx.lineTo(canvas.width, gy);
-  ctx.stroke();
-}
-
-function drawBackground() {
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  updateClouds();
-  drawGround();
-}
-
-/* ── GLOBOS ───────────────────────────────────────────── */
+/* ── GLOBOS ──────────────────────────────── */
 const balloons = [];
-const BALLOON_COLORS = ["#ff4d4d","#ffd24d","#4dd2ff","#66ff66","#ff66ff","#ff884d","#ff6b35"];
+const BCOLORS  = ["#ff4444","#ffd24d","#4dd2ff","#66ff66","#ff66ff","#ff8844","#44ddaa"];
 
 function createBalloon() {
   balloons.push({
-    x:           40 + Math.random() * (canvas.width - 80),
-    y:           canvas.height + 100,
-    radius:      28 + Math.random() * 22,
-    color:       BALLOON_COLORS[Math.floor(Math.random() * BALLOON_COLORS.length)],
-    speed:       1.2 + Math.random() * 2.2,
-    sway:        0.5 + Math.random() * 1.8,
-    swayOffset:  Math.random() * Math.PI * 2,
-    explode:     false,
-    explodeSize: 0,
+    x:            40 + Math.random() * (canvas.width - 80),
+    y:            canvas.height + 110,
+    radius:       24 + Math.random() * 22,
+    color:        BCOLORS[Math.floor(Math.random() * BCOLORS.length)],
+    speed:        1.0 + Math.random() * 2.0,
+    sway:         0.4 + Math.random() * 1.6,
+    swayOff:      Math.random() * Math.PI * 2,
+    explode:      false,
+    explodeR:     0,
     explodeAlpha: 1
   });
 }
@@ -294,366 +554,354 @@ function drawBalloons() {
   const t = Date.now();
   for (let i = balloons.length - 1; i >= 0; i--) {
     const b = balloons[i];
-    b.y -= b.speed;
-    b.x += Math.sin(t * 0.001 * b.sway + b.swayOffset) * 0.8;
-    b.speed += 0.0008;
+    if (!paused) {
+      b.y -= b.speed;
+      b.x += Math.sin(t * 0.001 * b.sway + b.swayOff) * 0.7;
+      b.speed += 0.0007;
+    }
 
     if (b.explode) {
-      b.explodeSize  += 5;
-      b.explodeAlpha -= 0.05;
+      if (!paused) {
+        b.explodeR     += 5;
+        b.explodeAlpha -= 0.055;
+      }
       ctx.save();
       ctx.globalAlpha = Math.max(b.explodeAlpha, 0);
-
-      // anillo exterior
-      ctx.beginPath();
-      ctx.fillStyle = "orange";
-      ctx.arc(b.x, b.y, b.explodeSize, 0, Math.PI * 2);
-      ctx.fill();
-
-      // centro brillante
-      ctx.beginPath();
-      ctx.fillStyle = "#ffe066";
-      ctx.arc(b.x, b.y, b.explodeSize * 0.5, 0, Math.PI * 2);
-      ctx.fill();
-
+      ctx.beginPath(); ctx.fillStyle = "rgba(255,140,0,1)";
+      ctx.arc(b.x, b.y, b.explodeR, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.fillStyle = "#ffe066";
+      ctx.arc(b.x, b.y, b.explodeR * .5, 0, Math.PI*2); ctx.fill();
       ctx.restore();
-      if (b.explodeAlpha <= 0) { balloons.splice(i, 1); }
+      if (b.explodeAlpha <= 0) balloons.splice(i, 1);
       continue;
     }
 
-    // Cuerda ondulante
-    ctx.strokeStyle = "rgba(80,60,40,.7)";
-    ctx.lineWidth   = 2;
+    // Cuerda
+    ctx.strokeStyle = "rgba(100,80,60,.6)";
+    ctx.lineWidth   = 1.5;
     ctx.beginPath();
     ctx.moveTo(b.x, b.y + b.radius);
     ctx.quadraticCurveTo(
-      b.x + Math.sin(t * 0.002) * 8,
-      b.y + b.radius + 25,
-      b.x + Math.sin(t * 0.003) * 5,
-      b.y + b.radius + 48
+      b.x + Math.sin(t * 0.002) * 6, b.y + b.radius + 22,
+      b.x + Math.sin(t * 0.003) * 4, b.y + b.radius + 44
     );
     ctx.stroke();
 
     // Globo
     ctx.beginPath();
     ctx.fillStyle = b.color;
-    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2);
     ctx.fill();
 
     // Brillo
     ctx.beginPath();
-    ctx.fillStyle = "rgba(255,255,255,.45)";
-    ctx.arc(b.x - b.radius * 0.3, b.y - b.radius * 0.3, b.radius * 0.28, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,.38)";
+    ctx.arc(b.x - b.radius*.3, b.y - b.radius*.3, b.radius*.26, 0, Math.PI*2);
     ctx.fill();
 
-    // Nudo inferior
-    ctx.fillStyle = b.color;
+    // Nudo
     ctx.beginPath();
-    ctx.arc(b.x, b.y + b.radius - 2, 5, 0, Math.PI * 2);
+    ctx.fillStyle = b.color;
+    ctx.arc(b.x, b.y + b.radius - 1, 4, 0, Math.PI*2);
     ctx.fill();
 
-    if (b.y < -120) { balloons.splice(i, 1); }
+    if (b.y < -130) balloons.splice(i, 1);
   }
 }
 
-/* ── CÓNDORES ─────────────────────────────────────────── */
+/* ── CÓNDORES ────────────────────────────── */
+/*
+  El sprite se dibuja SIEMPRE mirando a la IZQUIERDA (pico en x negativo).
+  - fromRight=true  → viene de la derecha, vuela hacia la izquierda → NO flip
+  - fromRight=false → viene de la izquierda, vuela hacia la derecha  → flip con scale(-1,1)
+*/
 const condors = [];
 
-/*
-  fromRight: true  → entra por la derecha, vuela a la izquierda (normal)
-  fromRight: false → entra por la izquierda, vuela a la derecha (espejado)
-*/
 function createCondor() {
   const fromRight = Math.random() > 0.5;
   condors.push({
-    x:          fromRight ? canvas.width + 200 : -340,
-    y:          80 + Math.random() * (canvas.height * 0.55),
-    speed:      2.2 + Math.random() * 1.6,
-    wing:       0,
-    dead:       false,
-    fallSpeed:  0,
+    x:         fromRight ? canvas.width + 220 : -220,
+    y:         70 + Math.random() * (canvas.height * 0.52),
+    speed:     2.0 + Math.random() * 1.8,
+    wing:      0,
+    dead:      false,
+    fallSpeed: 0,
     fromRight
   });
 }
 
-/* hitbox del cóndor en coordenadas del mundo:
-   el sprite se dibuja con translate(c.x, c.y)
-   cuerpo ocupa aprox x[-85..65], y[0..55]
-   ala span: x[-100..120]
-   usamos un rect central conservador */
-function condorHitBox(c) {
-  if (c.fromRight) {
-    return { x: c.x - 85, y: c.y - 30, w: 200, h: 80 };
-  } else {
-    // sprite espejado con scaleX(-1): origen sigue en c.x
-    return { x: c.x - 115, y: c.y - 30, w: 200, h: 80 };
-  }
+/* Sprite: cóndor mirando a la IZQUIERDA, centrado en (0,0)
+   pico:    x ≈ -100
+   cola:    x ≈  +60
+   alas:    y ≈ -25..+25
+   cuerpo:  y ≈  0..+45
+   hitbox conservador: x[-90..60], y[-30..50]  */
+function drawCondorSprite(wing) {
+  // Ala trasera (derecha del pájaro)
+  ctx.fillStyle = "#1a1a1a";
+  ctx.beginPath();
+  ctx.ellipse(50, -Math.sin(wing) * 20, 72, 20, 0.25, 0, Math.PI*2);
+  ctx.fill();
+
+  // Ala delantera (izquierda del pájaro)
+  ctx.beginPath();
+  ctx.ellipse(-42, Math.sin(wing) * 20, 72, 20, -0.25, 0, Math.PI*2);
+  ctx.fill();
+
+  // Cuerpo
+  ctx.fillStyle = "#252525";
+  ctx.beginPath();
+  ctx.ellipse(0, 22, 50, 28, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Cola
+  ctx.fillStyle = "#1a1a1a";
+  ctx.beginPath();
+  ctx.moveTo(48, 18);
+  ctx.lineTo(72, 14);
+  ctx.lineTo(68, 30);
+  ctx.lineTo(44, 32);
+  ctx.closePath();
+  ctx.fill();
+
+  // Gorguera blanca
+  ctx.fillStyle = "#dde8ee";
+  ctx.beginPath();
+  ctx.arc(-42, -2, 20, 0, Math.PI*2);
+  ctx.fill();
+
+  // Cabeza
+  ctx.fillStyle = "#bf5a42";
+  ctx.beginPath();
+  ctx.arc(-60, -14, 16, 0, Math.PI*2);
+  ctx.fill();
+
+  // Cresta
+  ctx.fillStyle = "#d96a50";
+  ctx.beginPath();
+  ctx.moveTo(-60, -30);
+  ctx.lineTo(-66, -18);
+  ctx.lineTo(-54, -18);
+  ctx.closePath();
+  ctx.fill();
+
+  // Pico (apunta a la izquierda, x negativo)
+  ctx.fillStyle = "#c89830";
+  ctx.beginPath();
+  ctx.moveTo(-74, -14);
+  ctx.lineTo(-98,  -8);
+  ctx.lineTo(-74,  -2);
+  ctx.closePath();
+  ctx.fill();
+  // gancho
+  ctx.fillStyle = "#9a7020";
+  ctx.beginPath();
+  ctx.moveTo(-94, -8);
+  ctx.lineTo(-104,-3);
+  ctx.lineTo(-94, -1);
+  ctx.closePath();
+  ctx.fill();
+
+  // Ojo
+  ctx.fillStyle = "#ffdd33";
+  ctx.beginPath();
+  ctx.arc(-63, -16, 5, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = "#111";
+  ctx.beginPath();
+  ctx.arc(-62, -16, 2.5, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.8)";
+  ctx.beginPath();
+  ctx.arc(-61, -17, 1, 0, Math.PI*2);
+  ctx.fill();
 }
 
 function drawCondors() {
   for (let i = condors.length - 1; i >= 0; i--) {
     const c = condors[i];
 
-    if (!c.dead) {
-      c.x    += c.fromRight ? -c.speed : c.speed;
-      c.wing += 0.18;
-    } else {
-      c.fallSpeed += 0.45;
-      c.y         += c.fallSpeed;
-      c.x         += c.fromRight ? -1 : 1;
+    if (!paused) {
+      if (!c.dead) {
+        c.x    += c.fromRight ? -c.speed : c.speed;
+        c.wing += 0.16;
+      } else {
+        c.fallSpeed += 0.42;
+        c.y         += c.fallSpeed;
+        c.x         += c.fromRight ? -1.5 : 1.5;
+      }
     }
 
     ctx.save();
     ctx.translate(c.x, c.y);
-
-    // Espejo si viene de la izquierda
-    if (!c.fromRight) {
-      ctx.scale(-1, 1);
-    }
-
-    // ── Alas ──────────────────────────────────────
-    ctx.fillStyle = "#1a1a1a";
-
-    // Ala izquierda (trasera)
-    ctx.beginPath();
-    ctx.ellipse(-60, Math.sin(c.wing) * 22, 75, 22, -0.28, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Ala derecha (delantera)
-    ctx.beginPath();
-    ctx.ellipse(60, -Math.sin(c.wing) * 22, 75, 22, 0.28, 0, Math.PI * 2);
-    ctx.fill();
-
-    // ── Cuerpo ─────────────────────────────────────
-    ctx.fillStyle = "#2a2a2a";
-    ctx.beginPath();
-    ctx.ellipse(0, 22, 52, 32, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Pechera blanca
-    ctx.fillStyle = "rgba(255,255,255,.18)";
-    ctx.beginPath();
-    ctx.ellipse(5, 20, 28, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // ── Cuello / gorguera blanca ───────────────────
-    ctx.fillStyle = "#e8e8e8";
-    ctx.beginPath();
-    ctx.arc(42, -4, 22, 0, Math.PI * 2);
-    ctx.fill();
-
-    // ── Cabeza ────────────────────────────────────
-    ctx.fillStyle = "#c0604a";
-    ctx.beginPath();
-    ctx.arc(64, -14, 17, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Cresta
-    ctx.fillStyle = "#e07050";
-    ctx.beginPath();
-    ctx.moveTo(64, -31);
-    ctx.lineTo(58, -20);
-    ctx.lineTo(70, -20);
-    ctx.fill();
-
-    // ── Pico ──────────────────────────────────────
-    ctx.fillStyle = "#d4a044";
-    ctx.beginPath();
-    ctx.moveTo(78, -14);
-    ctx.lineTo(100, -8);
-    ctx.lineTo(78, -2);
-    ctx.closePath();
-    ctx.fill();
-    // gancho del pico
-    ctx.fillStyle = "#b8882a";
-    ctx.beginPath();
-    ctx.moveTo(96, -8);
-    ctx.lineTo(104, -4);
-    ctx.lineTo(96, -2);
-    ctx.closePath();
-    ctx.fill();
-
-    // ── Ojo ───────────────────────────────────────
-    ctx.fillStyle = "#ffdd44";
-    ctx.beginPath();
-    ctx.arc(66, -16, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#111";
-    ctx.beginPath();
-    ctx.arc(67, -16, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-    // brillo ojo
-    ctx.fillStyle = "white";
-    ctx.beginPath();
-    ctx.arc(68, -17, 1, 0, Math.PI * 2);
-    ctx.fill();
-
-    // ── Patas (solo si muerto) ────────────────────
-    if (c.dead) {
-      ctx.strokeStyle = "#d4a044";
-      ctx.lineWidth = 3;
-      // pata 1
-      ctx.beginPath();
-      ctx.moveTo(-10, 50);
-      ctx.lineTo(-10, 72);
-      ctx.lineTo(-22, 82);
-      ctx.moveTo(-10, 72);
-      ctx.lineTo(2, 82);
-      ctx.stroke();
-      // pata 2
-      ctx.beginPath();
-      ctx.moveTo(14, 50);
-      ctx.lineTo(14, 72);
-      ctx.lineTo(2, 82);
-      ctx.moveTo(14, 72);
-      ctx.lineTo(26, 82);
-      ctx.stroke();
-    }
-
+    // flip solo si viene de la izquierda (para que el pico mire a la derecha)
+    if (!c.fromRight) ctx.scale(-1, 1);
+    drawCondorSprite(c.wing);
     ctx.restore();
 
-    // Eliminar si sale de pantalla
-    const outLeft  = c.fromRight  && c.x < -400;
-    const outRight = !c.fromRight && c.x >  canvas.width + 400;
-    const outDown  = c.y > canvas.height + 300;
-    if (outLeft || outRight || outDown) {
-      condors.splice(i, 1);
-    }
+    // Eliminar fuera de pantalla
+    if (
+      (c.fromRight  && c.x < -300) ||
+      (!c.fromRight && c.x > canvas.width + 300) ||
+      c.y > canvas.height + 300
+    ) condors.splice(i, 1);
   }
 }
 
-/* ── DISPAROS ─────────────────────────────────────────── */
+/* hitbox en coordenadas mundo */
+function condorHitBox(c) {
+  if (c.fromRight) {
+    return { x: c.x - 90, y: c.y - 32, w: 160, h: 80 };
+  } else {
+    return { x: c.x - 70, y: c.y - 32, w: 160, h: 80 };
+  }
+}
+
+/* ── DISPAROS ────────────────────────────── */
 const shots = [];
 
 canvas.addEventListener("touchstart", handleInput, { passive: false });
 canvas.addEventListener("mousedown",  handleInput);
 
 function handleInput(e) {
-  if (!gameRunning) return;
+  if (!gameRunning || paused) return;
   e.preventDefault();
-
   const rect = canvas.getBoundingClientRect();
   const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
   const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
 
-  shots.push({ x, y, radius: 8, life: 18 });
+  shots_total++;
+  shots.push({ x, y, r: 8, life: 16 });
 
-  let hitBalloon = false;
-  let hitCondor  = false;
+  let hitBalloon = false, hitCondor = false;
 
-  // Impacto globos
   for (let i = balloons.length - 1; i >= 0; i--) {
-    const b  = balloons[i];
+    const b = balloons[i];
     if (b.explode) continue;
     const dx = x - b.x, dy = y - b.y;
-    if (Math.sqrt(dx * dx + dy * dy) < b.radius + 8) {
-      b.explode  = true;
-      score     += 10;
-      uiScore.innerText = score;
+    if (dx*dx + dy*dy < (b.radius+10)*(b.radius+10)) {
+      b.explode = true;
+      score    += 10;
+      shots_hit++;
+      elScore.textContent = score;
+      sfxPop();
       hitBalloon = true;
       break;
     }
   }
 
-  // Impacto cóndor
-  for (let i = condors.length - 1; i >= 0; i--) {
-    const c  = condors[i];
-    if (c.dead) continue;
-    const hb = condorHitBox(c);
-    if (x >= hb.x && x <= hb.x + hb.w && y >= hb.y && y <= hb.y + hb.h) {
-      c.dead    = true;
-      hitCondor = true;
-      setTimeout(gameOver, 900);
-      break;
+  if (!hitBalloon) {
+    for (let i = condors.length - 1; i >= 0; i--) {
+      const c  = condors[i];
+      if (c.dead) continue;
+      const hb = condorHitBox(c);
+      if (x >= hb.x && x <= hb.x+hb.w && y >= hb.y && y <= hb.y+hb.h) {
+        c.dead    = true;
+        hitCondor = true;
+        sfxDanger();
+        setTimeout(gameOver, 900);
+        break;
+      }
     }
   }
 
+  if (!hitBalloon && !hitCondor) sfxMiss();
+
   if (navigator.vibrate) {
-    if (hitCondor)       navigator.vibrate([200, 80, 200]);
-    else if (hitBalloon) navigator.vibrate([40, 20, 40]);
-    else                 navigator.vibrate(15);
+    if (hitCondor)       navigator.vibrate([180,80,180]);
+    else if (hitBalloon) navigator.vibrate([30,15,30]);
+    else                 navigator.vibrate(12);
   }
 }
 
 function drawShots() {
   for (let i = shots.length - 1; i >= 0; i--) {
     const s = shots[i];
-    s.life--;
-    s.radius += 2.5;
-    const alpha = s.life / 18;
+    if (!paused) { s.life--; s.r += 2.8; }
+    const alpha = s.life / 16;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth   = 3.5;
+    ctx.strokeStyle = "rgba(255,255,255,.9)";
+    ctx.lineWidth   = 3;
     ctx.beginPath();
-    ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
     ctx.stroke();
     ctx.restore();
-    if (s.life <= 0) { shots.splice(i, 1); }
+    if (s.life <= 0) shots.splice(i, 1);
   }
 }
 
-/* ── GAME LOOP ─────────────────────────────────────────── */
+/* ── GAME LOOP ───────────────────────────── */
 function update() {
   if (!gameRunning) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawBackground();
+  ctx.drawImage(bgCanvas, 0, 0);
+  drawClouds();
   drawBalloons();
   drawCondors();
   drawShots();
   rafId = requestAnimationFrame(update);
 }
 
-/* ── INICIAR ───────────────────────────────────────────── */
+/* ── PAUSA ───────────────────────────────── */
+function togglePause() {
+  if (!gameRunning) return;
+  paused = !paused;
+  document.getElementById("pauseScreen").style.display = paused ? "flex" : "none";
+  if (!paused) rafId = requestAnimationFrame(update);
+}
+
+/* ── INICIAR ─────────────────────────────── */
 function startGame() {
   document.getElementById("startScreen").style.display = "none";
-  gameRunning = true;
+  gameRunning = true; paused = false;
 
-  balloonIntervalId = setInterval(() => { if (gameRunning) createBalloon(); }, 580);
-  condorIntervalId  = setInterval(() => { if (gameRunning) createCondor();  }, 2400);
+  balloonInt = setInterval(() => { if (gameRunning && !paused) createBalloon(); }, 580);
+  condorInt  = setInterval(() => { if (gameRunning && !paused) createCondor();  }, 2400);
 
-  timerIntervalId = setInterval(() => {
-    if (!gameRunning) return;
+  timerInt = setInterval(() => {
+    if (!gameRunning || paused) return;
     timeLeft--;
-    uiTime.innerText = timeLeft;
-
-    // barra de tiempo
+    elTime.innerHTML = timeLeft + '<span>s</span>';
     const pct = (timeLeft / 60) * 100;
-    timerBar.style.width = pct + "%";
-
-    // color urgencia
+    elTimeBar.style.width = pct + "%";
     if (timeLeft <= 10) {
-      timerBar.style.background = "#ff4d4d";
-      timerBox.style.color      = "#ff6b6b";
+      elTimeBar.style.background = "#ff4444";
     } else if (timeLeft <= 20) {
-      timerBar.style.background = "#ffd24d";
+      elTimeBar.style.background = "#ffd24d";
     }
-
-    if (timeLeft <= 0) { clearInterval(timerIntervalId); gameOver(); }
+    if (timeLeft <= 0) { clearInterval(timerInt); gameOver(); }
   }, 1000);
 
   rafId = requestAnimationFrame(update);
 }
 
-/* ── GAME OVER ─────────────────────────────────────────── */
+/* ── GAME OVER ───────────────────────────── */
 function gameOver() {
   if (!gameRunning) return;
   gameRunning = false;
 
   cancelAnimationFrame(rafId);
-  clearInterval(balloonIntervalId);
-  clearInterval(condorIntervalId);
-  clearInterval(timerIntervalId);
+  clearInterval(balloonInt);
+  clearInterval(condorInt);
+  clearInterval(timerInt);
 
-  document.getElementById("finalScore").textContent = "PUNTAJE FINAL: " + score;
-  document.getElementById("gameOver").style.display  = "flex";
+  if (score > record) {
+    record = score;
+    localStorage.setItem("cd_record", record);
+  }
+
+  const acc = shots_total > 0 ? Math.round((shots_hit / shots_total) * 100) : 0;
+  document.getElementById("finalScore").textContent = score;
+  document.getElementById("finalAcc").textContent   = acc + "%";
+  document.getElementById("gameOver").style.display = "flex";
 }
 
-/* ── RESPONSIVE ────────────────────────────────────────── */
+/* ── RESPONSIVE ──────────────────────────── */
 window.addEventListener("resize", () => {
   canvas.width  = innerWidth;
   canvas.height = innerHeight;
-  buildGradient();
+  buildBackground();
   initClouds();
 });
 </script>
